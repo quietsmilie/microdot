@@ -39,6 +39,7 @@ using RichardSzalay.MockHttp;
 
 using Shouldly;
 using Gigya.Microdot.Hosting.Environment;
+using Newtonsoft.Json;
 
 namespace Gigya.Microdot.UnitTests.ServiceListenerTests
 {
@@ -119,8 +120,16 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
 
             var responseJson = await (await new HttpClient().SendAsync(request)).Content.ReadAsStringAsync();
-            var responseException = _exceptionSerializer.Deserialize(responseJson);
-            responseException.ShouldBeOfType(exceptionType);
+
+            try
+            {
+                var responseException = _exceptionSerializer.Deserialize(responseJson);
+                responseException.ShouldBeOfType(exceptionType);
+            }
+            catch (JsonSerializationException e)
+            {
+                throw new Exception($"Failed to deserialize {responseJson} into an exception of type {exceptionType.Name}",e);
+            } 
         }
 
 
