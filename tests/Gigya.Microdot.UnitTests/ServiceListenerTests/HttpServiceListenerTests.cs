@@ -114,7 +114,8 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
                 k => k.RebindForTests());
 
             var _exceptionSerializer = _kernel.Kernel.Get<JsonExceptionSerializer>();
-            _testinghost.Host.Kernel.Get<IDemoService>().When(a => a.DoSomething()).Throw(i =>
+            var demoService = _testinghost.Host.Kernel.Get<IDemoService>();
+            demoService.When(a => a.DoSomething()).Throw(i =>
                 (Exception) Activator.CreateInstance(exceptionType, "MyEx", null, null, null));
 
             var request = await GetRequestFor<IDemoService>(p => p.DoSomething());
@@ -128,6 +129,11 @@ namespace Gigya.Microdot.UnitTests.ServiceListenerTests
             }
             catch (JsonSerializationException e)
             {
+                var demoService2 = _testinghost.Host.Kernel.Get<IDemoService>();
+                if (ReferenceEquals(demoService, demoService2) == false)
+                {
+                    throw new Exception("Something is rebinding demo service!!!");
+                }
                 throw new Exception($"Failed to deserialize {responseJson} into an exception of type {exceptionType.Name}",e);
             } 
         }
